@@ -1,0 +1,704 @@
+
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#172554">
+<title>Udaan - Daily Goal Tracker</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;padding:18px;
+ background:#f1f5f9;color:#172033;
+ font-family:Arial,sans-serif
+}
+.container{max-width:950px;margin:auto}
+header{
+ display:flex;justify-content:space-between;
+ align-items:center;gap:12px;flex-wrap:wrap;
+ margin-bottom:20px
+}
+h1{color:#244fc5;margin:0;font-size:27px}
+.subtitle{color:#64748b;margin:5px 0}
+button,select,input{font:inherit}
+button{
+ border:0;border-radius:9px;padding:10px 13px;
+ cursor:pointer;font-weight:bold
+}
+input,select{
+ padding:12px;border:1px solid #cbd5e1;
+ border-radius:9px;background:white
+}
+.card{
+ background:white;padding:20px;border-radius:15px;
+ margin-bottom:16px;
+ box-shadow:0 3px 12px #00000009
+}
+.hero{
+ background:linear-gradient(120deg,#172554,#3157d5);
+ color:white;padding:24px;border-radius:16px;
+ margin-bottom:16px
+}
+.hero h2{margin:0 0 8px}
+.hero p{margin:0;color:#dbeafe}
+.stats{
+ display:grid;grid-template-columns:repeat(4,1fr);
+ gap:12px;margin-bottom:16px
+}
+.stat{
+ background:white;padding:16px;border-radius:13px;
+ text-align:center
+}
+.stat strong{display:block;font-size:25px;margin:8px}
+.stat span{font-size:13px;color:#64748b}
+.add-row{display:flex;gap:8px;margin:14px 0}
+.add-row input{flex:1;min-width:0}
+.primary{background:#3157d5;color:white}
+.secondary{background:#e8edf5;color:#26334b}
+.green{background:#dcfce7;color:#15803d}
+.red{background:#fee2e2;color:#b91c1c}
+.orange{background:#fef3c7;color:#92400e}
+.goal{
+ display:flex;align-items:center;gap:8px;
+ padding:12px;border:1px solid #e2e8f0;
+ border-radius:11px;margin:9px 0;flex-wrap:wrap
+}
+.goal-text{flex:1;min-width:100px;overflow-wrap:anywhere}
+.goal.done .goal-text{
+ color:#15803d;text-decoration:line-through
+}
+.goal.failed .goal-text{
+ color:#b91c1c;text-decoration:line-through
+}
+.goal small{color:#64748b;font-size:11px}
+.grid{
+ display:grid;grid-template-columns:1fr 1fr;gap:16px
+}
+.bar{
+ height:12px;background:#e2e8f0;
+ border-radius:20px;overflow:hidden;margin:12px 0
+}
+.fill{
+ height:100%;width:0;
+ background:linear-gradient(90deg,#3157d5,#16a34a)
+}
+.tabs{display:flex;gap:8px;margin:12px 0}
+.tab{background:#e8edf5;color:#334155}
+.tab.active{background:#3157d5;color:white}
+.calendar-head{
+ display:flex;justify-content:space-between;
+ align-items:center;margin:12px 0
+}
+.calendar{
+ display:grid;grid-template-columns:repeat(7,1fr);
+ gap:5px
+}
+.day,.weekday{
+ min-height:37px;display:grid;place-items:center;
+ border-radius:8px;font-size:13px
+}
+.weekday{color:#64748b}
+.day{background:#f1f5f9}
+.day.has{border-bottom:3px solid #3157d5}
+.day.today{outline:2px solid #3157d5}
+.day.selected{background:#dbeafe;color:#1d4ed8;font-weight:bold}
+.day.blank{background:transparent}
+.notification-box{
+ background:#eff6ff;padding:14px;border-radius:11px;
+ margin-top:12px
+}
+.muted{font-size:13px;color:#64748b}
+.notice{
+ padding:12px;background:#fff7ed;
+ border-radius:10px;margin-top:10px;color:#9a3412
+}
+#toast{
+ position:fixed;bottom:20px;left:50%;
+ transform:translateX(-50%);
+ background:#172554;color:white;padding:13px 18px;
+ border-radius:12px;display:none;z-index:10;
+ max-width:90%;text-align:center
+}
+footer{text-align:center;color:#64748b;padding:20px}
+@media(max-width:700px){
+ body{padding:12px}
+ .stats{grid-template-columns:repeat(2,1fr)}
+ .grid{grid-template-columns:1fr}
+ .hero{padding:18px}
+ h1{font-size:22px}
+ .card{padding:15px}
+}
+@media(max-width:390px){
+ .add-row{flex-wrap:wrap}
+ .add-row input,.add-row button{width:100%}
+ .goal{gap:5px}
+ .goal button{padding:9px}
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<header>
+ <div>
+  <h1>🎯 Udaan</h1>
+  <p class="subtitle" id="tagline">हर दिन, एक नई शुरुआत</p>
+ </div>
+ <select id="language" onchange="changeLanguage()">
+  <option value="hi">हिंदी</option>
+  <option value="en">English</option>
+  <option value="bho">भोजपुरी</option>
+ </select>
+</header>
+
+<section class="hero">
+ <h2 id="welcome">आज का लक्ष्य तय करो!</h2>
+ <p id="heroText">छोटे कदम, बड़ी उपलब्धियाँ।</p>
+</section>
+
+<section class="stats">
+ <div class="stat">
+  <span id="totalLabel">कुल लक्ष्य</span>
+  <strong id="total">0</strong>
+ </div>
+ <div class="stat">
+  <span id="doneLabel">पूरे हुए</span>
+  <strong id="done">0</strong>
+ </div>
+ <div class="stat">
+  <span id="failedLabel">अधूरे</span>
+  <strong id="failed">0</strong>
+ </div>
+ <div class="stat">
+  <span id="percentLabel">सफलता</span>
+  <strong id="percent">0%</strong>
+ </div>
+</section>
+
+<div class="grid">
+
+<section class="card">
+ <h3 id="dailyTitle">📝 आज के लक्ष्य</h3>
+ <div class="add-row">
+  <input id="goalInput" placeholder="अपना लक्ष्य लिखें...">
+  <button class="primary" onclick="addGoal()" id="addButton">+ जोड़ें</button>
+ </div>
+ <div id="goalList"></div>
+ <p class="muted" id="goalHelp">
+  ✓ पूरा | ✕ अधूरा | ↺ Pending
+ </p>
+</section>
+
+<section class="card">
+ <h3 id="progressTitle">📊 Progress</h3>
+ <div class="tabs">
+  <button class="tab active" id="weekTab" onclick="setPeriod('week')">Weekly</button>
+  <button class="tab" id="monthTab" onclick="setPeriod('month')">Monthly</button>
+ </div>
+ <div id="periodLabel">इस सप्ताह की प्रगति</div>
+ <h2 id="periodPercent">0%</h2>
+ <div class="bar"><div class="fill" id="periodFill"></div></div>
+ <p id="periodSummary" class="muted"></p>
+</section>
+
+</div>
+
+<section class="card">
+ <h3 id="calendarTitle">📅 Calendar और पुराने Goals</h3>
+ <div class="calendar-head">
+  <button class="secondary" onclick="moveMonth(-1)">❮</button>
+  <strong id="monthName"></strong>
+  <button class="secondary" onclick="moveMonth(1)">❯</button>
+ </div>
+ <div class="calendar" id="calendar"></div>
+ <p class="muted" id="selectedInfo"></p>
+</section>
+
+<section class="card">
+ <h3 id="notificationTitle">🔔 Notification & Reminder</h3>
+ <div class="notification-box">
+  <p id="notificationDescription">
+   रोज शाम 6 बजे बाकी Goals की याद दिलाएँ।
+  </p>
+
+  <label id="reminderTimeLabel">Reminder का समय:</label>
+  <input type="time" id="reminderTime" value="18:00">
+
+  <p>
+   <label>
+    <input type="checkbox" id="reminderEnabled" checked>
+    <span id="enableText">Reminder चालू रखें</span>
+   </label>
+  </p>
+
+  <button class="primary" onclick="saveReminder()" id="saveReminder">
+   Save Reminder
+  </button>
+
+  <button class="secondary" onclick="enableNotifications()" id="enableNotification">
+   Allow Browser Notifications
+  </button>
+
+  <p class="muted" id="notificationStatus"></p>
+ </div>
+
+ <div class="notice" id="remainingNotice">
+  आज के सभी लक्ष्य यहाँ दिखाई देंगे।
+ </div>
+</section>
+
+<footer id="footer">
+ Udaan — आपकी मेहनत, आपकी प्रगति।
+</footer>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+const translations = {
+hi:{
+ tagline:"हर दिन, एक नई शुरुआत",
+ welcome:"आज का लक्ष्य तय करो!",
+ hero:"छोटे कदम, बड़ी उपलब्धियाँ।",
+ total:"कुल लक्ष्य",done:"पूरे हुए",failed:"अधूरे",
+ percent:"सफलता",daily:"📝 आज के लक्ष्य",
+ placeholder:"अपना लक्ष्य लिखें...",add:"+ जोड़ें",
+ help:"✓ पूरा | ✕ अधूरा | ↺ Pending",
+ progress:"📊 प्रगति",week:"साप्ताहिक",month:"मासिक",
+ calendar:"📅 कैलेंडर और पुराने Goals",
+ notification:"🔔 Notification & Reminder",
+ description:"रोज शाम 6 बजे बाकी Goals की याद दिलाएँ।",
+ time:"Reminder का समय:",enable:"Reminder चालू रखें",
+ save:"Reminder सेव करें",allow:"Browser Notification की अनुमति दें",
+ footer:"Udaan — आपकी मेहनत, आपकी प्रगति।",
+ empty:"अभी कोई लक्ष्य नहीं है।",
+ pending:"बाकी है",completed:"पूरा हुआ",notdone:"अधूरा",
+ remaining:"आज के बाकी लक्ष्य: ",allDone:"बधाई! आज के सभी लक्ष्य पूरे हो गए।",
+ weekLabel:"इस सप्ताह की प्रगति",monthLabel:"इस महीने की प्रगति",
+ selected:"चुनी हुई तारीख: ",noGoals:"इस दिन कोई लक्ष्य नहीं था।",
+ saved:"Reminder सेव हो गया।",allowed:"Notification की अनुमति मिल गई।",
+ denied:"Notification की अनुमति नहीं मिली।",
+ reminderMessage:"आज आपके {n} लक्ष्य बाकी हैं। उन्हें पूरा करने की कोशिश करें!",
+ completedMessage:"शानदार! आपने आज के सभी लक्ष्य पूरे कर लिए।",
+ permissionFirst:"पहले Browser Notification की अनुमति दें।",
+ statusOn:"Browser notifications उपलब्ध हैं।",
+ statusOff:"Browser notification की अनुमति अभी नहीं मिली है।",
+ today:"आज",delete:"हटाएँ"
+},
+en:{
+ tagline:"A fresh start every day",welcome:"Set today's goals!",
+ hero:"Small steps, big achievements.",
+ total:"Total Goals",done:"Completed",failed:"Not Done",
+ percent:"Success",daily:"📝 Today's Goals",
+ placeholder:"Write your goal...",add:"+ Add",
+ help:"✓ Done | ✕ Not done | ↺ Pending",
+ progress:"📊 Progress",week:"Weekly",month:"Monthly",
+ calendar:"📅 Calendar & Goal History",
+ notification:"🔔 Notifications & Reminders",
+ description:"Get a reminder about remaining goals every evening.",
+ time:"Reminder time:",enable:"Enable reminders",
+ save:"Save Reminder",allow:"Allow Browser Notifications",
+ footer:"Udaan — Your effort, your progress.",
+ empty:"No goals yet.",pending:"Pending",completed:"Completed",
+ notdone:"Not done",remaining:"Goals remaining today: ",
+ allDone:"Congratulations! All today's goals are complete.",
+ weekLabel:"This week's progress",monthLabel:"This month's progress",
+ selected:"Selected date: ",noGoals:"No goals on this day.",
+ saved:"Reminder saved.",allowed:"Notification permission granted.",
+ denied:"Notification permission denied.",
+ reminderMessage:"You have {n} goals remaining today. Keep going!",
+ completedMessage:"Great! You completed all today's goals.",
+ permissionFirst:"Please allow browser notifications first.",
+ statusOn:"Browser notifications are available.",
+ statusOff:"Browser notification permission has not been granted.",
+ today:"Today",delete:"Delete"
+},
+bho:{
+ tagline:"हर दिन, एगो नया सुरुआत",
+ welcome:"आज के लक्ष्य तय करीं!",
+ hero:"छोट कदम, बड़ सफलता।",
+ total:"कुल लक्ष्य",done:"पूरा भइल",failed:"ना भइल",
+ percent:"सफलता",daily:"📝 आज के लक्ष्य",
+ placeholder:"आपन लक्ष्य लिखीं...",add:"+ जोड़ीं",
+ help:"✓ पूरा | ✕ ना भइल | ↺ Pending",
+ progress:"📊 प्रगति",week:"हफ्ता",month:"महीना",
+ calendar:"📅 कैलेंडर आ पुरान लक्ष्य",
+ notification:"🔔 Notification आ Reminder",
+ description:"रोज साँझ 6 बजे बाकी लक्ष्य के याद दिलाईं।",
+ time:"Reminder के समय:",enable:"Reminder चालू रखीं",
+ save:"Reminder सेव करीं",allow:"Browser Notification के अनुमति दीं",
+ footer:"Udaan — राउर मेहनत, राउर प्रगति।",
+ empty:"अभी कवनो लक्ष्य नइखे।",pending:"बाकी बा",
+ completed:"पूरा भइल",notdone:"ना भइल",
+ remaining:"आज के बाकी लक्ष्य: ",
+ allDone:"बहुत बढ़िया! आज के सब लक्ष्य पूरा हो गइल।",
+ weekLabel:"एह हफ्ता के प्रगति",monthLabel:"एह महीना के प्रगति",
+ selected:"चुनल तारीख: ",noGoals:"एह दिन कवनो लक्ष्य ना रहे।",
+ saved:"Reminder सेव हो गइल।",allowed:"Notification के अनुमति मिल गइल।",
+ denied:"Notification के अनुमति ना मिलल।",
+ reminderMessage:"आज राउर {n} लक्ष्य बाकी बा। पूरा करे के कोशिश करीं!",
+ completedMessage:"बहुत बढ़िया! आज के सब लक्ष्य पूरा हो गइल।",
+ permissionFirst:"पहिले Browser Notification के अनुमति दीं।",
+ statusOn:"Browser notifications चालू बा।",
+ statusOff:"Browser notification के अनुमति नइखे मिलल।",
+ today:"आज",delete:"हटाईं"
+}
+};
+
+const $ = id => document.getElementById(id);
+const todayKey = () => dateKey(new Date());
+
+function dateKey(d){
+ return d.getFullYear()+"-"+
+ String(d.getMonth()+1).padStart(2,"0")+"-"+
+ String(d.getDate()).padStart(2,"0");
+}
+
+function parseDate(k){
+ const [y,m,d]=k.split("-").map(Number);
+ return new Date(y,m-1,d);
+}
+
+function lang(){
+ return translations[$("language").value] || translations.hi;
+}
+
+function getData(){
+ return JSON.parse(localStorage.getItem("udaanGoals") || "{}");
+}
+
+function saveData(data){
+ localStorage.setItem("udaanGoals",JSON.stringify(data));
+}
+
+function getGoals(date=todayKey()){
+ return getData()[date] || [];
+}
+
+function saveGoals(date,goals){
+ const data=getData();
+ data[date]=goals;
+ saveData(data);
+}
+
+let selectedDate=todayKey();
+let calendarDate=new Date();
+let period="week";
+
+function toast(message){
+ const el=$("toast");
+ el.textContent=message;
+ el.style.display="block";
+ setTimeout(()=>el.style.display="none",3000);
+}
+
+function changeLanguage(){
+ const t=lang();
+ $("tagline").textContent=t.tagline;
+ $("welcome").textContent=t.welcome;
+ $("heroText").textContent=t.hero;
+ $("totalLabel").textContent=t.total;
+ $("doneLabel").textContent=t.done;
+ $("failedLabel").textContent=t.failed;
+ $("percentLabel").textContent=t.percent;
+ $("dailyTitle").textContent=t.daily;
+ $("goalInput").placeholder=t.placeholder;
+ $("addButton").textContent=t.add;
+ $("goalHelp").textContent=t.help;
+ $("progressTitle").textContent=t.progress;
+ $("weekTab").textContent=t.week;
+ $("monthTab").textContent=t.month;
+ $("calendarTitle").textContent=t.calendar;
+ $("notificationTitle").textContent=t.notification;
+ $("notificationDescription").textContent=t.description;
+ $("reminderTimeLabel").textContent=t.time;
+ $("enableText").textContent=t.enable;
+ $("saveReminder").textContent=t.save;
+ $("enableNotification").textContent=t.allow;
+ $("footer").textContent=t.footer;
+ render();
+ updateNotificationStatus();
+}
+
+function addGoal(){
+ const input=$("goalInput");
+ const text=input.value.trim();
+ if(!text){toast(lang().placeholder);return}
+ const goals=getGoals(selectedDate);
+ goals.push({id:Date.now()+Math.random(),text,status:"pending"});
+ saveGoals(selectedDate,goals);
+ input.value="";
+ render();
+}
+
+$("goalInput").addEventListener("keydown",e=>{
+ if(e.key==="Enter")addGoal();
+});
+
+function updateGoal(id,status){
+ const goals=getGoals(selectedDate).map(g=>
+  g.id===id?{...g,status}:g
+ );
+ saveGoals(selectedDate,goals);
+ render();
+}
+
+function deleteGoal(id){
+ const goals=getGoals(selectedDate).filter(g=>g.id!==id);
+ saveGoals(selectedDate,goals);
+ render();
+}
+
+function render(){
+ const t=lang();
+ const goals=getGoals(selectedDate);
+ const completed=goals.filter(g=>g.status==="done").length;
+ const failed=goals.filter(g=>g.status==="failed").length;
+ const percent=goals.length?Math.round(completed/goals.length*100):0;
+
+ $("total").textContent=goals.length;
+ $("done").textContent=completed;
+ $("failed").textContent=failed;
+ $("percent").textContent=percent+"%";
+
+ const list=$("goalList");
+ list.innerHTML="";
+
+ if(!goals.length){
+  list.innerHTML='<p class="muted">'+t.empty+'</p>';
+ }
+
+ goals.forEach(g=>{
+  const row=document.createElement("div");
+  row.className="goal "+(g.status==="done"?"done":g.status==="failed"?"failed":"");
+
+  const name=document.createElement("div");
+  name.className="goal-text";
+  name.textContent=g.text;
+
+  const status=document.createElement("small");
+  status.textContent=" · "+t[g.status==="done"?"completed":g.status==="failed"?"notdone":"pending"];
+  name.appendChild(status);
+
+  const yes=makeButton("✓","green",()=>updateGoal(g.id,"done"));
+  const no=makeButton("✕","red",()=>updateGoal(g.id,"failed"));
+  const reset=makeButton("↺","orange",()=>updateGoal(g.id,"pending"));
+  const del=makeButton("×","secondary",()=>deleteGoal(g.id));
+
+  row.append(name,yes,no,reset,del);
+  list.appendChild(row);
+ });
+
+ renderProgress();
+ renderCalendar();
+ updateRemaining();
+}
+
+function makeButton(text,cls,fn){
+ const b=document.createElement("button");
+ b.textContent=text;
+ b.className=cls;
+ b.onclick=fn;
+ return b;
+}
+
+function setPeriod(p){
+ period=p;
+ $("weekTab").classList.toggle("active",p==="week");
+ $("monthTab").classList.toggle("active",p==="month");
+ renderProgress();
+}
+
+function renderProgress(){
+ const t=lang();
+ const now=new Date();
+ let dates=[];
+
+ if(period==="week"){
+  const start=new Date(now);
+  start.setDate(now.getDate()-(now.getDay()+6)%7);
+  for(let i=0;i<7;i++){
+   const d=new Date(start);
+   d.setDate(start.getDate()+i);
+   dates.push(dateKey(d));
+  }
+  $("periodLabel").textContent=t.weekLabel;
+ }else{
+  const count=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
+  for(let i=1;i<=count;i++){
+   dates.push(dateKey(new Date(now.getFullYear(),now.getMonth(),i)));
+  }
+  $("periodLabel").textContent=t.monthLabel;
+ }
+
+ let total=0,done=0;
+ dates.forEach(k=>{
+  getGoals(k).forEach(g=>{
+   total++;
+   if(g.status==="done")done++;
+  });
+ });
+
+ const p=total?Math.round(done/total*100):0;
+ $("periodPercent").textContent=p+"%";
+ $("periodFill").style.width=p+"%";
+ $("periodSummary").textContent=done+" "+t.completed+" / "+total+" "+t.total;
+}
+
+function moveMonth(amount){
+ calendarDate.setMonth(calendarDate.getMonth()+amount);
+ renderCalendar();
+}
+
+function renderCalendar(){
+ const t=lang();
+ const y=calendarDate.getFullYear();
+ const m=calendarDate.getMonth();
+ const first=new Date(y,m,1);
+ const count=new Date(y,m+1,0).getDate();
+ const offset=(first.getDay()+6)%7;
+
+ $("monthName").textContent=calendarDate.toLocaleDateString(
+  $("language").value==="en"?"en-IN":"hi-IN",
+  {month:"long",year:"numeric"}
+ );
+
+ const cal=$("calendar");
+ cal.innerHTML="";
+ const labels=$("language").value==="en"
+  ?["M","T","W","T","F","S","S"]
+  :["सो","मं","बु","गु","शु","श","र"];
+
+ labels.forEach(x=>{
+  const e=document.createElement("div");
+  e.className="weekday";
+  e.textContent=x;
+  cal.appendChild(e);
+ });
+
+ for(let i=0;i<offset;i++){
+  const e=document.createElement("div");
+  e.className="day blank";
+  cal.appendChild(e);
+ }
+
+ for(let n=1;n<=count;n++){
+  const d=new Date(y,m,n);
+  const k=dateKey(d);
+  const b=document.createElement("button");
+  b.className="day";
+  b.textContent=n;
+
+  if(k===todayKey())b.classList.add("today");
+  if(k===selectedDate)b.classList.add("selected");
+  if(getGoals(k).length)b.classList.add("has");
+
+  b.onclick=()=>{
+   selectedDate=k;
+   render();
+  };
+  cal.appendChild(b);
+ }
+
+ $("selectedInfo").textContent=t.selected+
+  parseDate(selectedDate).toLocaleDateString(
+   $("language").value==="en"?"en-IN":"hi-IN"
+  );
+}
+
+function updateRemaining(){
+ const t=lang();
+ const goals=getGoals(todayKey());
+ const remaining=goals.filter(g=>g.status==="pending").length;
+
+ $("remainingNotice").textContent=remaining
+  ?t.remaining+remaining
+  :t.allDone;
+}
+
+/* Reminder settings */
+function loadReminder(){
+ const saved=JSON.parse(localStorage.getItem("udaanReminder")||"{}");
+ $("reminderTime").value=saved.time||"18:00";
+ $("reminderEnabled").checked=saved.enabled!==false;
+}
+
+function saveReminder(){
+ const settings={
+  time:$("reminderTime").value||"18:00",
+  enabled:$("reminderEnabled").checked
+ };
+ localStorage.setItem("udaanReminder",JSON.stringify(settings));
+ toast(lang().saved);
+}
+
+async function enableNotifications(){
+ if(!("Notification" in window)){
+  $("notificationStatus").textContent="This browser does not support notifications.";
+  return;
+ }
+ const permission=await Notification.requestPermission();
+ if(permission==="granted"){
+  toast(lang().allowed);
+ }else{
+  toast(lang().denied);
+ }
+ updateNotificationStatus();
+}
+
+function updateNotificationStatus(){
+ if(!("Notification" in window))return;
+ $("notificationStatus").textContent=
+  Notification.permission==="granted"
+   ?lang().statusOn:lang().statusOff;
+}
+
+function sendReminder(){
+ const goals=getGoals(todayKey());
+ const remaining=goals.filter(g=>g.status==="pending").length;
+ const t=lang();
+
+ if(!remaining){
+  if(goals.length && goals.every(g=>g.status==="done")){
+   new Notification("Udaan",{body:t.completedMessage});
+  }
+  return;
+ }
+
+ const message=t.reminderMessage.replace("{n}",remaining);
+
+ if("Notification" in window && Notification.permission==="granted"){
+  new Notification("Udaan - Daily Reminder",{body:message});
+ }
+ toast(message);
+}
+
+function checkReminder(){
+ const settings=JSON.parse(localStorage.getItem("udaanReminder")||"{}");
+ if(settings.enabled===false)return;
+
+ const now=new Date();
+ const current=String(now.getHours()).padStart(2,"0")+":"+
+  String(now.getMinutes()).padStart(2,"0");
+ const sentKey="udaanReminderSent_"+todayKey();
+
+ if(current===(settings.time||"18:00") &&
+    localStorage.getItem(sentKey)!=="yes"){
+  localStorage.setItem(sentKey,"yes");
+  sendReminder();
+ }
+}
+
+$("reminderEnabled").addEventListener("change",saveReminder);
+$("reminderTime").addEventListener("change",saveReminder);
+
+loadReminder();
+changeLanguage();
+setInterval(checkReminder,30000);
+</script>
+</body>
+</html>
